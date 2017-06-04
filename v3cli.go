@@ -33,6 +33,16 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
+const bash_comp = `_v3cli() {
+  COMPREPLY=()
+  local word="${COMP_WORDS[COMP_CWORD]}"
+  local completions=$(v3cli complete ${COMP_CWORD} "${COMP_WORDS[@]}")
+  COMPREPLY=( $(compgen -W "$completions" -- "$word") )
+}
+
+complete -F _v3cli v3cli`
+
+
 func main() {
 	// define root CLI command
 	var rootCmd = &cobra.Command{
@@ -62,7 +72,7 @@ func main() {
 			if len(args) > 1 {
 				cmnd.Path = args[1]
 			}
-			if (cmd.Name() != "ls" && cmd.Name() != "complete") && len(args) < 1 {
+			if (cmd.Name() != "ls" && cmd.Name() != "complete" && cmd.Name() != "bash") && len(args) < 1 {
 				return fmt.Errorf("Please specify container Name/Id, Path and parameters !\n")
 			}
 
@@ -78,7 +88,7 @@ func main() {
 	// link child commands
 	rootCmd.AddCommand(cmnd.NewCmdLS(), cmnd.NewCmdGet(), cmnd.NewCmdPut(), cmnd.NewCmdPutitem(), cmnd.NewCmdGetitem(),
 		cmnd.NewCmdGetitems(), cmnd.NewCmdGetrecord(), cmnd.NewCmdPutrecord(), cmnd.NewCmdCreatestream(),
-		NewCmdComplete())
+		NewCmdComplete(),NewCmdBash())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -103,7 +113,7 @@ func NewCmdComplete() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			cword, _ := strconv.Atoi(args[0])
 			var commands []string
-			for _, c := range cmd.Commands() {
+			for _, c := range cmd.Parent().Commands() {
 				commands = append(commands, c.Name())
 			}
 
@@ -143,6 +153,17 @@ func NewCmdComplete() *cobra.Command {
 			}
 
 			os.Exit(0)
+		},
+	}
+	return cmd
+}
+// for Bash auto completion, output bash init string
+func NewCmdBash() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:    "bash",
+		Short:  "init bash auto-completion, usage: source <(v3cli bash)",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(bash_comp)
 		},
 	}
 	return cmd
