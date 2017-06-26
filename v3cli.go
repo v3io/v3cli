@@ -88,7 +88,7 @@ func main() {
 	// link child commands
 	rootCmd.AddCommand(cmnd.NewCmdLS(), cmnd.NewCmdGet(), cmnd.NewCmdPut(), cmnd.NewCmdPutitem(), cmnd.NewCmdGetitem(),
 		cmnd.NewCmdGetitems(), cmnd.NewCmdGetrecord(), cmnd.NewCmdPutrecord(), cmnd.NewCmdCreatestream(),
-		NewCmdComplete(),NewCmdBash())
+		NewCmdComplete(),NewCmdBash(), cmnd.NewCmdIngest())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
