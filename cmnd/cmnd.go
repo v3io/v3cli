@@ -259,6 +259,7 @@ func NewCmdIngest() *cobra.Command {
 			generator, _ := cmd.Flags().GetString("generator") //format (json/csv)//data type (records, stream)
 
 			workload := config.Workload{
+				Name:"ingest",
 				Container:Container,
 				Target:Path,
 				Payload:payload,
