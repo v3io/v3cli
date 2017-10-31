@@ -33,6 +33,11 @@ const RootLong string = `
 v3io command line utility
 `
 
+const IngestExample = `
+./v3cli ingest 1 test_emd5/ -u 192.168.206.10:8081  --generator csv2kv
+ --payload-path ../http_blaster/examples/payloads/order-book-sample.csv
+ --schema-path ../http_blaster/examples/schemas/schema_example.json -w 10`
+
 const RootExamples string = `   v3cli ls                                         # List data containers (buckets)
    v3cli ls datalake docs                           # List objects in docs directory at "datalake" data container
    echo "test" | v3cli put datalake docs/test.txt   # Put/Upload object
@@ -44,6 +49,7 @@ List objects, files, tables, streams
 
 const LSExamples string = `# List the data containers (buckets)
    v3cli ls
+
 
 # list the objects in a data container
    v3cli ls datalake
