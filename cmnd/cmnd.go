@@ -29,6 +29,7 @@ import (
 	"github.com/v3io/http_blaster/httpblaster"
 	"sync"
 	"strings"
+	"github.com/v3io/http_blaster/httpblaster/tui"
 )
 
 var Verbose bool
@@ -258,6 +259,13 @@ func NewCmdIngest() *cobra.Command {
 			lazy_interval, _ := cmd.Flags().GetInt("lazy-interval")
 			generator, _ := cmd.Flags().GetString("generator") //format (json/csv)//data type (records, stream)
 
+			status_codes_acceptance:= map[string]float64 {
+				//code:%
+				"200":100,
+				"204":100,
+				"205":100,
+			}
+
 			workload := config.Workload{
 				Name:"ingest",
 				Container:Container,
@@ -269,20 +277,26 @@ func NewCmdIngest() *cobra.Command {
 				Lazy:lazy_interval,
 			}
 
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			status_codes_acceptance:= map[string]float64 {
-				//code:%
-				"200":100,
-				"204":100,
-				"205":100,
-			}
-
-			e := &httpblaster.Executor{Workload: workload, Host: host,
-				Port: port, TLS_mode: false,
+			globals := config.Global{
+				Port:port,
 				StatusCodesAcceptance:status_codes_acceptance,
 			}
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+			get := tui.LatencyCollector{}
+			put := tui.LatencyCollector{}
+			stat := tui.StatusesCollector{}
+			e := &httpblaster.Executor{
+				Workload: workload,
+				Host: host,
+				TLS_mode: false,
+				Globals:globals,
+				Ch_put_latency:put.New(160,1),
+				Ch_get_latency:get.New(160,1),
+				Ch_statuses:stat.New(160,1),
+			}
+
 			e.Start(&wg)
 			wg.Wait()
 			_, err := e.Report()
