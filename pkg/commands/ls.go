@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/v3io/v3io-go-http"
-	"os"
 )
 
 type lsCommandeer struct {
@@ -43,29 +42,30 @@ func NewCmdLS(rootCommandeer *RootCommandeer) *lsCommandeer {
 }
 
 func (c *lsCommandeer) list() error {
-	if err := c.rootCommandeer.initialize(); err != nil {
+
+	root := c.rootCommandeer
+	if err := root.initialize(); err != nil {
 		return err
 	}
 
-	container, err := c.rootCommandeer.initV3io()
+	container, err := root.initV3io()
 	if err != nil {
 		return err
 	}
 
-	resp, err := container.Sync.ListBucket(&v3io.ListBucketInput{Path: c.rootCommandeer.dirPath})
+	resp, err := container.Sync.ListBucket(&v3io.ListBucketInput{Path: root.dirPath})
 	if err != nil {
 		return err
 	}
 
 	result := resp.Output.(*v3io.ListBucketOutput)
 
-	out := os.Stdout
 	for _, val := range result.CommonPrefixes {
-		fmt.Fprintf(out, "%s\n", val.Prefix)
+		fmt.Fprintf(root.out, "%s\n", val.Prefix)
 	}
-	fmt.Fprintf(out, "  SIZE     MODIFIED                 NAME\n")
+	fmt.Fprintf(root.out, "  SIZE     MODIFIED                 NAME\n")
 	for _, val := range result.Contents {
-		fmt.Fprintf(out, "%9d  %s  %s\n", val.Size, val.LastModified, val.Key)
+		fmt.Fprintf(root.out, "%9d  %s  %s\n", val.Size, val.LastModified, val.Key)
 	}
 	return nil
 

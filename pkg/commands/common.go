@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/v3io/v3cli/help"
 	"os"
@@ -28,17 +27,4 @@ func AddWatch(cmd *cobra.Command) {
 // input file flag option
 func AddInFile(cmd *cobra.Command) {
 	cmd.Flags().StringP("input-file", "f", "", "Input file for the different put* commands")
-}
-
-// select stdin vs file and test input
-func GetInFile(file string) (err error) {
-	if file == "" {
-		InFile = os.Stdin
-	} else {
-		InFile, err = os.Open(file)
-		if err != nil {
-			return fmt.Errorf("Failed to open input file: %s\n", err)
-		}
-	}
-	return nil
 }

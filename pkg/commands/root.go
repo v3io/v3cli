@@ -25,7 +25,9 @@ type RootCommandeer struct {
 	container   string
 	username    string
 	password    string
+	inFile      string
 	out         io.Writer
+	in          io.Reader
 }
 
 func NewRootCommandeer() *RootCommandeer {
@@ -37,29 +39,29 @@ func NewRootCommandeer() *RootCommandeer {
 		Long:    GetLongHelp("root"),
 		Example: GetExample("root"),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			file, err := cmd.Flags().GetString("input-file")
-			if err == nil {
-				err = GetInFile(file)
-				if err != nil {
-					return err
-				}
-			}
-			if file == "" {
-				InFile = os.Stdin
+
+			if commandeer.inFile == "" {
+				commandeer.in = os.Stdin
 			} else {
-				InFile, err = os.Open(file)
+				var err error
+				commandeer.in, err = os.Open(commandeer.inFile)
 				if err != nil {
 					return fmt.Errorf("Failed to open input file: %s\n", err)
 				}
 			}
-			commandeer.out = InFile
+
+			commandeer.out = os.Stdout
 			if len(args) > 0 {
 				Container = args[0]
 				commandeer.container = args[0]
 			}
 			if len(args) > 1 {
-				commandeer.dirPath = args[1]
-				Path = args[1]
+				path := args[1]
+				if !strings.HasSuffix(path, "/") {
+					path += "/"
+				}
+				commandeer.dirPath = path
+				Path = path
 			}
 			if (cmd.Name() != "ls" && cmd.Name() != "complete" && cmd.Name() != "bash") && len(args) < 1 {
 				return fmt.Errorf("Please specify container Name/Id, Path and parameters !\n")
@@ -95,9 +97,9 @@ func NewRootCommandeer() *RootCommandeer {
 		NewCmdPutitem(),
 		NewCmdGetitem(),
 		NewCmdGetitems(commandeer).cmd,
-		NewCmdGetrecord(),
-		NewCmdPutrecord(),
-		NewCmdCreatestream(),
+		NewCmdGetrecord(commandeer).cmd,
+		NewCmdPutrecord(commandeer).cmd,
+		NewCmdCreatestream(commandeer).cmd,
 		NewCmdComplete(),
 		NewCmdBash(),
 		NewCmdIngest(),

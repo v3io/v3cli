@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/v3io/v3cli/pkg/utils"
 	"github.com/v3io/v3io-go-http"
-	"os"
 )
 
 type getItemsCommandeer struct {
@@ -59,7 +58,6 @@ func (c *getItemsCommandeer) getitems() error {
 		return err
 	}
 
-	c.rootCommandeer.out = os.Stdout
 	input := v3io.GetItemsInput{Path: c.rootCommandeer.dirPath, Filter: c.filter, AttributeNames: c.attributes}
 	c.rootCommandeer.logger.DebugWith("GetItems input", "input", input)
 	iter, err := utils.NewAsyncItemsCursor(
@@ -68,7 +66,8 @@ func (c *getItemsCommandeer) getitems() error {
 		return err
 	}
 
-	fmt.Fprintf(c.rootCommandeer.out, "[\n")
+	out := c.rootCommandeer.out
+	fmt.Fprintf(out, "[\n")
 	first := true
 
 	for rowNum := 0; rowNum < c.maxrec && iter.Next(); rowNum++ {
@@ -78,12 +77,12 @@ func (c *getItemsCommandeer) getitems() error {
 			return err
 		}
 		if !first {
-			fmt.Fprintf(c.rootCommandeer.out, ",\n")
+			fmt.Fprintf(out, ",\n")
 		}
 		first = false
-		fmt.Fprintf(c.rootCommandeer.out, "%s", body)
+		fmt.Fprintf(out, "%s", body)
 	}
-	fmt.Fprintf(c.rootCommandeer.out, "\n]\n")
+	fmt.Fprintf(out, "\n]\n")
 
 	if iter.Err() != nil {
 		return iter.Err()
