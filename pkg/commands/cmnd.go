@@ -52,33 +52,3 @@ func NewCmdPut() *cobra.Command {
 	AddInFile(cmd)
 	return cmd
 }
-
-func NewCmdPutitem() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "putitem [container-name] [table-path/key]",
-		Short:   "Upload record content/fields from json input file or stdin",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
-		Aliases: []string{"puti"},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return sdk.RunPutItem(cmd.OutOrStdout(), Url, Container, Path, InFile, Verbose)
-		},
-	}
-	return cmd
-}
-
-func NewCmdGetitem() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "getitem [container-name] [table-path/key]",
-		Short:   "Retrive record content/fields (as json struct)",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
-		Aliases: []string{"gi"},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			attrs, _ := cmd.Flags().GetString("attrs")
-			return sdk.RunGetItem(cmd.OutOrStdout(), Url, Container, Path, attrs, Verbose)
-		},
-	}
-	cmd.Flags().StringP("attrs", "a", "*", "GetItem(s) Columns to return seperated by ','")
-	return cmd
-}

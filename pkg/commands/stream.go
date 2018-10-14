@@ -28,7 +28,7 @@ func NewCmdCreatestream(rootCommandeer *RootCommandeer) *createStreamCommandeer 
 		Short:   "Create a new stream with N shards",
 		Long:    GetLongHelp(""),
 		Example: GetExample(""),
-		Aliases: []string{"cstr"},
+		Aliases: []string{"cs"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			root := commandeer.rootCommandeer
@@ -173,7 +173,7 @@ func NewCmdPutrecord(rootCommandeer *RootCommandeer) *putrecordCommandeer {
 		Short:   "Upload stream record/message content from input file or stdin",
 		Long:    GetLongHelp(""),
 		Example: GetExample(""),
-		Aliases: []string{"putr"},
+		Aliases: []string{"pr"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			bytes, err := ioutil.ReadAll(commandeer.rootCommandeer.in)
