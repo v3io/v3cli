@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
@@ -30,14 +31,18 @@ type RootCommandeer struct {
 	in          io.Reader
 }
 
+const RootExamples string = `   v3cli ls                                         # List data containers (buckets)
+   v3cli ls datalake docs                           # List objects in docs directory at "datalake" data container
+   echo "test" | v3cli put datalake docs/test.txt   # Put/Upload object
+   v3cli getitems datalake mytable -a "*" -q "age>30"   # list records with selected fields and query`
+
 func NewRootCommandeer() *RootCommandeer {
 	commandeer := &RootCommandeer{}
 
 	cmd := &cobra.Command{
 		Use:     "v3cli [command] [container] [path] [flags]",
 		Short:   "v3io command line utility",
-		Long:    GetLongHelp("root"),
-		Example: GetExample("root"),
+		Example: RootExamples,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
 			if commandeer.inFile == "" {
@@ -52,7 +57,6 @@ func NewRootCommandeer() *RootCommandeer {
 
 			commandeer.out = os.Stdout
 			if len(args) > 0 {
-				Container = args[0]
 				commandeer.container = args[0]
 			}
 			if len(args) > 1 {
@@ -61,7 +65,6 @@ func NewRootCommandeer() *RootCommandeer {
 					path += "/"
 				}
 				commandeer.dirPath = path
-				Path = path
 			}
 			if (cmd.Name() != "ls" && cmd.Name() != "complete" && cmd.Name() != "bash") && len(args) < 1 {
 				return fmt.Errorf("Please specify container Name/Id, Path and parameters !\n")
@@ -81,7 +84,7 @@ func NewRootCommandeer() *RootCommandeer {
 	cmd.PersistentFlags().StringVarP(&commandeer.v3ioPath, "server", "s", defaultV3ioServer,
 		"Web-gateway (web-APIs) service endpoint of an instance of\nthe Iguazio Continuous Data Platfrom, of the format\n\"<IP address>:<port number=8081>\". Examples: \"localhost:8081\"\n(when running on the target platform); \"192.168.1.100:8081\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.cfgFilePath, "config", "g", "",
-		"Path to a YAML configuration file. When this flag isn't\nset, the CLI checks for a "+config.DefaultConfigurationFileName+" configuration file in the\ncurrent directory. CLI flags override file confiugrations.\nExample: \"~/cfg/my_v3io_cfg.yaml\".")
+		"Path to a YAML configuration file. When this flag isn't\nset, the CLI checks for a "+config.DefaultConfigurationFileName+" configuration file in the\ncurrent directory. CLI flags override file cconfiguration\nExample: \"~/cfg/my_v3io_cfg.yaml\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.container, "container", "c", "",
 		"The name of an Iguazio Continous Data Platform data container. Example: \"bigdata\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.username, "username", "u", "",
@@ -92,17 +95,20 @@ func NewRootCommandeer() *RootCommandeer {
 	// Add children
 	cmd.AddCommand(
 		NewCmdLS(commandeer).cmd,
-		NewCmdGet(),
-		NewCmdPut(),
+		NewCmdGet(commandeer).cmd,
+		NewCmdPut(commandeer).cmd,
+		NewCmdDel(commandeer).cmd,
 		NewCmdPutitem(commandeer).cmd,
+		NewCmdUpdateItem(commandeer).cmd,
 		NewCmdGetitem(commandeer).cmd,
 		NewCmdGetitems(commandeer).cmd,
 		NewCmdGetrecord(commandeer).cmd,
 		NewCmdPutrecord(commandeer).cmd,
+		NewCmdDelitems(commandeer).cmd,
 		NewCmdCreatestream(commandeer).cmd,
 		NewCmdComplete(commandeer),
 		NewCmdBash(),
-		NewCmdIngest(),
+		NewCmdIngest(commandeer),
 	)
 
 	commandeer.cmd = cmd
@@ -220,4 +226,25 @@ func (rc *RootCommandeer) initV3io() (*v3io.Container, error) {
 	}
 
 	return newContainer, nil
+}
+
+func getConfirmation(prompt string) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [y/n]: ", prompt)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			errors.Wrap(err, "Failed to get user input.")
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			return true, nil
+		} else if response == "n" || response == "no" {
+			return false, nil
+		}
+	}
 }

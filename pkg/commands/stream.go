@@ -26,8 +26,6 @@ func NewCmdCreatestream(rootCommandeer *RootCommandeer) *createStreamCommandeer 
 	cmd := &cobra.Command{
 		Use:     "createstream [container-name] [stream-path]",
 		Short:   "Create a new stream with N shards",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
 		Aliases: []string{"cs"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -78,8 +76,6 @@ func NewCmdGetrecord(rootCommandeer *RootCommandeer) *getrecordCommandeer {
 	cmd := &cobra.Command{
 		Use:     "getrecords [container-name] [stream-path/shard-id] [-s seek][-t time][-n seq][-m max][-w int]",
 		Short:   "Retrive one or more stream records",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
 		Aliases: []string{"gr"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -171,8 +167,6 @@ func NewCmdPutrecord(rootCommandeer *RootCommandeer) *putrecordCommandeer {
 	cmd := &cobra.Command{
 		Use:     "putrecord [container-name] [stream-path]",
 		Short:   "Upload stream record/message content from input file or stdin",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
 		Aliases: []string{"pr"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 

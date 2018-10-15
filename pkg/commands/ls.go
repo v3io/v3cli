@@ -17,6 +17,14 @@ type lsCommandeer struct {
 	maxobj         int
 }
 
+const LSExamples string = `# List the data containers (buckets)
+   v3cli ls
+
+
+# list the objects in a data container
+   v3cli ls datalake
+   v3cli ls datalake /docs`
+
 func NewCmdLS(rootCommandeer *RootCommandeer) *lsCommandeer {
 
 	commandeer := &lsCommandeer{
@@ -26,8 +34,7 @@ func NewCmdLS(rootCommandeer *RootCommandeer) *lsCommandeer {
 	cmd := &cobra.Command{
 		Use:        "ls [container-name] [path]",
 		Short:      "List objects and directories (prefixes)",
-		Long:       GetLongHelp("ls"),
-		Example:    GetExample("ls"),
+		Example:    LSExamples,
 		SuggestFor: []string{"list", "show"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// select between list containers vs list directory/path

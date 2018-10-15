@@ -9,18 +9,29 @@ import (
 	"sync"
 )
 
-func NewCmdIngest() *cobra.Command {
+const IngestExample = `
+./v3cli ingest 1 test_emd5/ -u 192.168.206.10:8081  --generator csv2kv
+ --payload-path ../http_blaster/examples/payloads/order-book-sample.csv
+ --schema-path ../http_blaster/examples/schemas/schema_example.json -w 10`
+
+func NewCmdIngest(rootCommandeer *RootCommandeer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ingest [container-name] [target-path] [url]",
 		Short:   "Load data from file to stream or kv",
-		Long:    GetLongHelp(""),
-		Example: GetExample("ingest"),
+		Example: IngestExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			if err := rootCommandeer.initialize(); err != nil {
+				return err
+			}
+
+			url := rootCommandeer.v3ioPath
+
 			var host string
 			var port string
-			url_arr := strings.Split(Url, ":")
+			url_arr := strings.Split(url, ":")
 			if len(url_arr) == 1 {
-				host = Url
+				host = url
 			} else {
 				host = url_arr[0]
 				port = url_arr[1]
@@ -40,8 +51,8 @@ func NewCmdIngest() *cobra.Command {
 
 			workload := config.Workload{
 				Name:      "ingest",
-				Container: Container,
-				Target:    Path,
+				Container: rootCommandeer.container,
+				Target:    rootCommandeer.dirPath,
 				Payload:   payload,
 				Workers:   workers,
 				Generator: generator,

@@ -26,8 +26,6 @@ func NewCmdGetitems(rootCommandeer *RootCommandeer) *getItemsCommandeer {
 	cmd := &cobra.Command{
 		Use:     "getitems [container-name] [table-path] [-a attrs] [-q query]",
 		Short:   "Retrive multiple records and fields (as json struct) based on query",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
 		Aliases: []string{"gis"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -102,9 +100,7 @@ func NewCmdPutitem(rootCommandeer *RootCommandeer) *putItemCommandeer {
 	cmd := &cobra.Command{
 		Use:     "putitem [container-name] [table-path/key]",
 		Short:   "Upload record content/fields from json input file or stdin",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
-		Aliases: []string{"puti"},
+		Aliases: []string{"pi"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			bytes, err := ioutil.ReadAll(commandeer.rootCommandeer.in)
@@ -137,6 +133,47 @@ func NewCmdPutitem(rootCommandeer *RootCommandeer) *putItemCommandeer {
 	return commandeer
 }
 
+type updateItemCommandeer struct {
+	cmd            *cobra.Command
+	rootCommandeer *RootCommandeer
+	expression     string
+	condition      string
+}
+
+func NewCmdUpdateItem(rootCommandeer *RootCommandeer) *updateItemCommandeer {
+
+	commandeer := &updateItemCommandeer{
+		rootCommandeer: rootCommandeer,
+	}
+
+	cmd := &cobra.Command{
+		Use:     "updateitem [container-name] [table-path/key]",
+		Short:   "update record content/fields using an expression (and optional condition)",
+		Aliases: []string{"ui"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			root := commandeer.rootCommandeer
+			if err := root.initialize(); err != nil {
+				return err
+			}
+
+			container, err := root.initV3io()
+			if err != nil {
+				return err
+			}
+
+			//TODO: add condition (to v3io-http)
+			return container.Sync.UpdateItem(&v3io.UpdateItemInput{Path: root.dirPath, Expression: &commandeer.expression})
+		},
+	}
+
+	cmd.Flags().StringVarP(&commandeer.expression, "expression", "e", "", "Update expression, e.g. x=5;y='good';z=z+1")
+	cmd.Flags().StringVarP(&commandeer.condition, "condition", "n", "", "Update condition, update only if the condition is met")
+
+	commandeer.cmd = cmd
+	return commandeer
+}
+
 type getItemCommandeer struct {
 	cmd            *cobra.Command
 	rootCommandeer *RootCommandeer
@@ -152,8 +189,6 @@ func NewCmdGetitem(rootCommandeer *RootCommandeer) *getItemCommandeer {
 	cmd := &cobra.Command{
 		Use:     "getitem [container-name] [table-path/key]",
 		Short:   "Retrive record content/fields (as json struct)",
-		Long:    GetLongHelp(""),
-		Example: GetExample(""),
 		Aliases: []string{"gi"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -184,6 +219,60 @@ func NewCmdGetitem(rootCommandeer *RootCommandeer) *getItemCommandeer {
 		},
 	}
 	cmd.Flags().StringSliceVarP(&commandeer.attributes, "attrs", "a", []string{"*"}, "GetItem(s) Columns to return seperated by ','")
+
+	commandeer.cmd = cmd
+
+	return commandeer
+}
+
+type delItemsCommandeer struct {
+	cmd            *cobra.Command
+	rootCommandeer *RootCommandeer
+	filter         string
+	force          bool
+}
+
+func NewCmdDelitems(rootCommandeer *RootCommandeer) *delItemsCommandeer {
+
+	commandeer := &delItemsCommandeer{
+		rootCommandeer: rootCommandeer,
+	}
+
+	cmd := &cobra.Command{
+		Use:     "delitems [container-name] [table-path] [-a attrs] [-q query]",
+		Short:   "Delete multiple records with optional filter",
+		Aliases: []string{"gis"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			root := commandeer.rootCommandeer
+			if err := root.initialize(); err != nil {
+				return err
+			}
+
+			container, err := root.initV3io()
+			if err != nil {
+				return err
+			}
+
+			if !commandeer.force {
+				confirmedByUser, err := getConfirmation(
+					fmt.Sprintf("You are about to delete the table '%s' in container '%s'. Are you sure?", root.dirPath, root.container))
+				if err != nil {
+					return err
+				}
+
+				if !confirmedByUser {
+					return fmt.Errorf("Delete cancelled by the user.")
+				}
+			}
+
+			return utils.DeleteTable(root.logger, container, root.dirPath, commandeer.filter, root.v3iocfg.Workers)
+		},
+	}
+
+	cmd.Flags().StringVarP(&commandeer.filter, "filter", "q", "", "GetItems query filter string, see getitems help for more")
+	cmd.Flags().BoolVarP(&commandeer.force, "force", "f", false,
+		"Forceful deletion - don't display a delete-verification prompt.")
 
 	commandeer.cmd = cmd
 
