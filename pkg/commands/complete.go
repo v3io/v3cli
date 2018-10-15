@@ -2,10 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/iguazio/v3io"
 	"github.com/spf13/cobra"
-	"github.com/v3io/v3cli/sdk"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -21,7 +18,7 @@ const bash_comp = `_v3cli() {
 complete -F _v3cli v3cli`
 
 // for Bash auto completion
-func NewCmdComplete() *cobra.Command {
+func NewCmdComplete(root *RootCommandeer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "complete [path to complete]",
 		Short:  "bash completion helper",
@@ -33,29 +30,40 @@ func NewCmdComplete() *cobra.Command {
 				commands = append(commands, c.Name())
 			}
 
+			if err := root.initialize(); err != nil {
+				os.Exit(1)
+			}
+
 			switch cword {
 			case 1:
 				fmt.Printf("%s", strings.Join(commands, " "))
 			case 2:
-				bkts, err := sdk.ListAll(Url, Verbose)
+				bkts, err := listAll(root)
 				if err != nil {
 					os.Exit(1)
 				}
 				list := []string{}
-				for _, val := range bkts.Bucket {
-					list = append(list, fmt.Sprintf("%d", val.Id))
+				for _, val := range bkts {
+					list = append(list, val.Name)
 				}
 				fmt.Printf("%s", strings.Join(list, " "))
 			case 3:
-				cn := args[3]
-				v3 := v3io.V3iow{"http://" + Url + "/" + cn, &http.Transport{}, false}
+				if len(args) < 5 {
+					os.Exit(1)
+				}
+
+				root.container = args[3]
 				prefix := ""
 				sp := strings.LastIndex(args[4], "/")
 				if sp >= 0 {
 					prefix = args[4][:sp]
 				}
 
-				resp, _ := v3.ListBucket(prefix)
+				resp, err := listBucket(root, prefix)
+				if err != nil {
+					os.Exit(1)
+				}
+
 				list := []string{}
 				for _, val := range resp.CommonPrefixes {
 					list = append(list, val.Prefix)

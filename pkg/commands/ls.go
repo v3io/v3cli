@@ -1,9 +1,12 @@
 package commands
 
 import (
+	"encoding/xml"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/v3io/v3io-go-http"
+	"io/ioutil"
+	"net/http"
 )
 
 type lsCommandeer struct {
@@ -48,6 +51,19 @@ func (c *lsCommandeer) list() error {
 		return err
 	}
 
+	if root.container == "" {
+		buckets, err := listAll(root)
+		if err != nil {
+			return err
+		}
+
+		for _, bucket := range buckets {
+			fmt.Fprintf(root.out, "%6d  %-15s  %s\n", bucket.Id, bucket.Name, bucket.CreationDate)
+		}
+
+		return nil
+	}
+
 	container, err := root.initV3io()
 	if err != nil {
 		return err
@@ -69,4 +85,51 @@ func (c *lsCommandeer) list() error {
 	}
 	return nil
 
+}
+
+func listBucket(rc *RootCommandeer, prefix string) (*v3io.ListBucketOutput, error) {
+
+	container, err := rc.initV3io()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := container.Sync.ListBucket(&v3io.ListBucketInput{Path: prefix})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Output.(*v3io.ListBucketOutput), nil
+}
+
+func listAll(rc *RootCommandeer) ([]v3io.Bucket, error) {
+
+	if rc.v3iocfg.WebApiEndpoint == "" {
+		return nil, fmt.Errorf("Error please specify API URL through the command line or config file")
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", "http://"+rc.v3iocfg.WebApiEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(rc.v3iocfg.Username, rc.v3iocfg.Password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	bodyText, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	output := v3io.ListAllOutput{}
+	err = xml.Unmarshal(bodyText, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output.Buckets.Bucket, nil
 }

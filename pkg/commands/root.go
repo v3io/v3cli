@@ -81,7 +81,7 @@ func NewRootCommandeer() *RootCommandeer {
 	cmd.PersistentFlags().StringVarP(&commandeer.v3ioPath, "server", "s", defaultV3ioServer,
 		"Web-gateway (web-APIs) service endpoint of an instance of\nthe Iguazio Continuous Data Platfrom, of the format\n\"<IP address>:<port number=8081>\". Examples: \"localhost:8081\"\n(when running on the target platform); \"192.168.1.100:8081\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.cfgFilePath, "config", "g", "",
-		"Path to a YAML configuration file. When this flag isn't\nset, the CLI checks for a "+config.DefaultConfigurationFileName+" configuration file in the\ncurrent directory. CLI flags override file confiugrations.\nExample: \"~/cfg/my_v3io_tsdb_cfg.yaml\".")
+		"Path to a YAML configuration file. When this flag isn't\nset, the CLI checks for a "+config.DefaultConfigurationFileName+" configuration file in the\ncurrent directory. CLI flags override file confiugrations.\nExample: \"~/cfg/my_v3io_cfg.yaml\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.container, "container", "c", "",
 		"The name of an Iguazio Continous Data Platform data container. Example: \"bigdata\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.username, "username", "u", "",
@@ -100,7 +100,7 @@ func NewRootCommandeer() *RootCommandeer {
 		NewCmdGetrecord(commandeer).cmd,
 		NewCmdPutrecord(commandeer).cmd,
 		NewCmdCreatestream(commandeer).cmd,
-		NewCmdComplete(),
+		NewCmdComplete(commandeer),
 		NewCmdBash(),
 		NewCmdIngest(),
 	)
@@ -130,9 +130,9 @@ func (rc *RootCommandeer) initialize() error {
 	if err != nil {
 		// Display an error if we fail to load a configuration file
 		if rc.cfgFilePath == "" {
-			return errors.Wrap(err, "Failed to load the TSDB configuration.")
+			return errors.Wrap(err, "Failed to load configuration.")
 		} else {
-			return errors.Wrap(err, fmt.Sprintf("Failed to load the TSDB configuration from '%s'.", rc.cfgFilePath))
+			return errors.Wrap(err, fmt.Sprintf("Failed to load the configuration from '%s'.", rc.cfgFilePath))
 		}
 	}
 	return rc.populateConfig(cfg)
@@ -183,7 +183,7 @@ func (rc *RootCommandeer) populateConfig(cfg *config.V3ioConfig) error {
 			if rc.container != "" {
 				cfg.Container = rc.container
 			} else if cfg.Container == "" {
-				return fmt.Errorf("Missing the name of the TSDB's parent data container.")
+				return fmt.Errorf("Missing the name of the data container.")
 			}
 			cfg.WebApiEndpoint = rc.v3ioPath
 		} else {
@@ -195,7 +195,7 @@ func (rc *RootCommandeer) populateConfig(cfg *config.V3ioConfig) error {
 		cfg.Container = rc.container
 	}
 	if cfg.WebApiEndpoint == "" || cfg.Container == "" {
-		return fmt.Errorf("Not all required configuration information was provided. The endpoint of the web-gateway service, related username and password authentication credentials, the name of the TSDB parent data container, and the path to the TSDB table within the container, must be defined as part of the CLI command or in a configuration file.")
+		return fmt.Errorf("Not all required configuration information was provided. The endpoint of the web-gateway service, related username and password authentication credentials, the name of the data container, and the path within the container, must be defined as part of the CLI command or in a configuration file.")
 	}
 	if rc.logLevel != "" {
 		cfg.LogLevel = rc.logLevel

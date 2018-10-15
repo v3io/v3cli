@@ -20,13 +20,11 @@ such restriction.
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/iguazio/v3io"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 // List all data containers
@@ -76,114 +74,5 @@ func RunPut(out io.Writer, url, container, path string, infile io.Reader, verbos
 		return fmt.Errorf("Error in Put operation (%v)\n", err)
 	}
 	fmt.Fprintf(out, "%s\n", resp)
-	return nil
-}
-
-func RunPutItem(out io.Writer, url, container, path string, infile io.Reader, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	bytes, err := ioutil.ReadAll(infile)
-	if err != nil {
-		return fmt.Errorf("Error reading input file (%v)\n", err)
-	}
-	list := make(map[string]interface{})
-	err = json.Unmarshal(bytes, &list)
-	resp, err := v3.UpdateItem(path, list)
-	if err != nil {
-		return fmt.Errorf("Error in Put/UpdateItem operation (%v)\n", err)
-	}
-	fmt.Fprintf(out, "%s\n", resp)
-	return nil
-}
-
-func RunGetItem(out io.Writer, url, container, path, attrs string, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	resp, err := v3.GetItem(path, attrs)
-	if err != nil {
-		return fmt.Errorf("Error in GetItem operation (%v)\n", err)
-	}
-	body, err := json.Marshal(resp.Item)
-	if err != nil {
-		return fmt.Errorf("Error in converting responce to Json (%v)\n", err)
-	}
-	fmt.Fprintf(out, "%s\n", body)
-	return nil
-}
-
-func RunGetItems(out io.Writer, url, container, path, attrs, filter string, maxrec int, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	marker := ""
-	fmt.Fprintf(out, "[\n")
-	first := true
-	for {
-		resp, err := v3.GetItems(path, attrs, filter, marker, maxrec, 0, 1)
-		if err != nil {
-			return fmt.Errorf("Error in GetItems operation (%v)\n", err)
-		}
-		for _, it := range resp.Items {
-			body, err := json.Marshal(it)
-			if err != nil {
-				panic(err)
-			}
-			if !first {
-				fmt.Fprintf(out, ",\n")
-			}
-			first = false
-			fmt.Fprintf(out, "%s", body)
-		}
-		if resp.LastItemIncluded == "TRUE" {
-			break
-		}
-		marker = resp.NextMarker
-	}
-	fmt.Fprintf(out, "\n]\n")
-	return nil
-}
-
-func RunGetRecords(out io.Writer, url, container, path, stype string, maxrec, interval int, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	v, err := v3.SeekShard(path, stype, 0)
-	if err != nil {
-		return fmt.Errorf("Error in Seek operation (%v)\n", err)
-	}
-	fmt.Fprintf(out, "Seek: %d\n", v)
-	for {
-		res3, err := v3.GetRecords(path, v, maxrec, 0)
-		if err != nil {
-			return fmt.Errorf("Error in GetRecords operation (%v)\n", err)
-		}
-		for _, d := range res3.Records {
-			fmt.Fprintf(out, "%s\n", d.Data)
-		}
-		if interval == 0 {
-			return nil
-		}
-		time.Sleep(time.Duration(interval) * time.Second)
-		v = res3.NextLocation
-	}
-	return nil
-}
-
-func RunPutRecord(out io.Writer, url, container, path string, infile io.Reader, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	bytes, err := ioutil.ReadAll(infile)
-	if err != nil {
-		return fmt.Errorf("Error reading input file (%v)\n", err)
-	}
-	msg := []string{string(bytes)}
-	res2, err := v3.PutRecords(path, msg)
-	if err != nil {
-		return fmt.Errorf("Error in PutRecord operation (%v)\n", err)
-	}
-	fmt.Fprintf(out, "Resp: %s\n", res2)
-	return nil
-}
-
-func RunCreateStream(out io.Writer, url, container, path string, shards, size int, verbose bool) error {
-	v3 := v3io.V3iow{"http://" + url + "/" + container, &http.Transport{}, verbose}
-	res, err := v3.CreateStream(path, shards, size)
-	if err != nil {
-		return fmt.Errorf("Error in CreateStream operation (%v)\n", err)
-	}
-	fmt.Fprintf(out, "Resp: %s\n", res)
 	return nil
 }
