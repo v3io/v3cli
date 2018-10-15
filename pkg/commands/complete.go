@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-const bash_comp = `_v3cli() {
+const bash_comp = `_v3ctl() {
   COMPREPLY=()
   local word="${COMP_WORDS[COMP_CWORD]}"
-  local completions=$(v3cli complete ${COMP_CWORD} "${COMP_WORDS[@]}")
+  local completions=$(v3ctl complete ${COMP_CWORD} "${COMP_WORDS[@]}")
   COMPREPLY=( $(compgen -W "$completions" -- "$word") )
 }
 
-complete -F _v3cli v3cli`
+complete -F _v3ctl v3ctl`
 
 // for Bash auto completion
 func NewCmdComplete(root *RootCommandeer) *cobra.Command {
@@ -86,7 +86,7 @@ func NewCmdComplete(root *RootCommandeer) *cobra.Command {
 func NewCmdBash() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bash",
-		Short: "init bash auto-completion, usage: source <(v3cli bash)",
+		Short: "init bash auto-completion, usage: source <(v3ctl bash)",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(bash_comp)
 		},

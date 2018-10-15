@@ -31,16 +31,16 @@ type RootCommandeer struct {
 	in          io.Reader
 }
 
-const RootExamples string = `   v3cli ls                                         # List data containers (buckets)
-   v3cli ls datalake docs                           # List objects in docs directory at "datalake" data container
-   echo "test" | v3cli put datalake docs/test.txt   # Put/Upload object
-   v3cli getitems datalake mytable -a "*" -q "age>30"   # list records with selected fields and query`
+const RootExamples string = `   v3ctl ls                                         # List data containers (buckets)
+   v3ctl ls datalake docs                           # List objects in docs directory at "datalake" data container
+   echo "test" | v3ctl put datalake docs/test.txt   # Put/Upload object
+   v3ctl getitems datalake mytable -a "*" -q "age>30"   # list records with selected fields and query`
 
 func NewRootCommandeer() *RootCommandeer {
 	commandeer := &RootCommandeer{}
 
 	cmd := &cobra.Command{
-		Use:     "v3cli [command] [container] [path] [flags]",
+		Use:     "v3ctl [command] [container] [path] [flags]",
 		Short:   "v3io command line utility",
 		Example: RootExamples,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

@@ -18,12 +18,12 @@ type lsCommandeer struct {
 }
 
 const LSExamples string = `# List the data containers (buckets)
-   v3cli ls
+   v3ctl ls
 
 
 # list the objects in a data container
-   v3cli ls datalake
-   v3cli ls datalake /docs`
+   v3ctl ls datalake
+   v3ctl ls datalake /docs`
 
 func NewCmdLS(rootCommandeer *RootCommandeer) *lsCommandeer {
 

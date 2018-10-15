@@ -45,7 +45,7 @@ func NewLogger(level string) (logger.Logger, error) {
 		logLevel = nucliozap.WarnLevel
 	}
 
-	log, err := nucliozap.NewNuclioZapCmd("v3cli", logLevel)
+	log, err := nucliozap.NewNuclioZapCmd("v3ctl", logLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func CreateContainer(logger logger.Logger, addr, cont, username, password string
 	}
 
 	// Create session
-	session, err := context.NewSession(username, password, "v3cli")
+	session, err := context.NewSession(username, password, "v3ctl")
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create a session.")
 	}

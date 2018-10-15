@@ -10,7 +10,7 @@ import (
 )
 
 const IngestExample = `
-./v3cli ingest 1 test_emd5/ -u 192.168.206.10:8081  --generator csv2kv
+./v3ctl ingest 1 test_emd5/ -u 192.168.206.10:8081  --generator csv2kv
  --payload-path ../http_blaster/examples/payloads/order-book-sample.csv
  --schema-path ../http_blaster/examples/schemas/schema_example.json -w 10`
 
