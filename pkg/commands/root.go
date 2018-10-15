@@ -85,8 +85,6 @@ func NewRootCommandeer() *RootCommandeer {
 		"Web-gateway (web-APIs) service endpoint of an instance of\nthe Iguazio Continuous Data Platfrom, of the format\n\"<IP address>:<port number=8081>\". Examples: \"localhost:8081\"\n(when running on the target platform); \"192.168.1.100:8081\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.cfgFilePath, "config", "g", "",
 		"Path to a YAML configuration file. When this flag isn't\nset, the CLI checks for a "+config.DefaultConfigurationFileName+" configuration file in the\ncurrent directory. CLI flags override file cconfiguration\nExample: \"~/cfg/my_v3io_cfg.yaml\".")
-	cmd.PersistentFlags().StringVarP(&commandeer.container, "container", "c", "",
-		"The name of an Iguazio Continous Data Platform data container. Example: \"bigdata\".")
 	cmd.PersistentFlags().StringVarP(&commandeer.username, "username", "u", "",
 		"Username of an Iguazio Continous Data Platform user.")
 	cmd.PersistentFlags().StringVarP(&commandeer.password, "password", "p", "",
