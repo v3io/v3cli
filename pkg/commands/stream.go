@@ -80,6 +80,9 @@ func NewCmdGetrecord(rootCommandeer *RootCommandeer) *getrecordCommandeer {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			root := commandeer.rootCommandeer
+			if root.dirPath == "" {
+				return fmt.Errorf("missing stream path (<stream>/<shard-id>")
+			}
 			input := v3io.SeekShardInput{Path: root.dirPath}
 
 			switch strings.ToLower(commandeer.seek) {
@@ -110,7 +113,7 @@ func NewCmdGetrecord(rootCommandeer *RootCommandeer) *getrecordCommandeer {
 
 			resp, err := container.Sync.SeekShard(&input)
 			if err != nil {
-				return fmt.Errorf("Error in Seek operation (%v)", err)
+				return fmt.Errorf("Error in Seek operation, make sure the path include the shard id (e.g. <stream>/0) - %v", err)
 			}
 			location := resp.Output.(*v3io.SeekShardOutput).Location
 			fmt.Fprintln(root.out, "Seek location:", location)
@@ -131,11 +134,14 @@ func NewCmdGetrecord(rootCommandeer *RootCommandeer) *getrecordCommandeer {
 						"Seq:", r.SequenceNumber)
 					fmt.Fprintf(root.out, "%s\n", string(r.Data))
 				}
-				if commandeer.watch == 0 {
-					return nil
-				}
-				time.Sleep(time.Duration(commandeer.watch) * time.Second)
+
 				location = output.NextLocation
+				if output.RecordsBehindLatest == 0 {
+					if commandeer.watch == 0 {
+						return nil
+					}
+					time.Sleep(time.Duration(commandeer.watch) * time.Second)
+				}
 			}
 			return nil
 		},
