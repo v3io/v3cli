@@ -1,3 +1,23 @@
+/*
+Copyright 2016 Iguazio Systems Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License") with
+an addition restriction as set forth herein. You may not use this
+file except in compliance with the License. You may obtain a copy of
+the License at http://www.apache.org/licenses/LICENSE-2.0.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. See the License for the specific language governing
+permissions and limitations under the License.
+
+In addition, you may not use the software for any purposes that are
+illegal under applicable law, and the grant of the foregoing license
+under the Apache 2.0 license is conditioned upon your compliance with
+such restriction.
+*/
+
 package commands
 
 import (
@@ -40,9 +60,9 @@ func NewCmdCreatestream(rootCommandeer *RootCommandeer) *createStreamCommandeer 
 			}
 
 			err = container.Sync.CreateStream(&v3io.CreateStreamInput{
-				Path: root.dirPath, ShardCount: commandeer.shards, RetentionPeriodHours: commandeer.retention})
+				Path: endWithSlash(root.dirPath), ShardCount: commandeer.shards, RetentionPeriodHours: commandeer.retention})
 			if err != nil {
-				root.logger.ErrorWith("CreateStream failed", "path", root.dirPath, "err", err)
+				root.logger.ErrorWith("CreateStream failed", "path", endWithSlash(root.dirPath), "err", err)
 			}
 
 			return nil
@@ -51,7 +71,7 @@ func NewCmdCreatestream(rootCommandeer *RootCommandeer) *createStreamCommandeer 
 
 	cmd.Flags().IntVarP(&commandeer.shards, "shards", "n", 1, "Number of shards (partitions)")
 	cmd.Flags().IntVarP(&commandeer.size, "shardsize", "z", 10, "Stream shard size in MB")
-	cmd.Flags().IntVarP(&commandeer.retention, "retention", "r", 7, "Stream retention time in days")
+	cmd.Flags().IntVarP(&commandeer.retention, "retention", "r", 24, "Stream retention time in hours")
 
 	commandeer.cmd = cmd
 	return commandeer
@@ -131,7 +151,10 @@ func NewCmdGetrecord(rootCommandeer *RootCommandeer) *getrecordCommandeer {
 				output := resp.Output.(*v3io.GetRecordsOutput)
 				for _, r := range output.Records {
 					fmt.Fprintln(root.out, "Time:", time.Unix(int64(r.ArrivalTimeSec), int64(r.ArrivalTimeNSec)),
-						"Seq:", r.SequenceNumber)
+						"Seq:", r.SequenceNumber, "PartitionKey:", r.PartitionKey)
+					if r.ClientInfo != nil {
+						fmt.Fprintf(root.out, "ClientInfo: %s\nData:\n", string(r.ClientInfo))
+					}
 					fmt.Fprintf(root.out, "%s\n", string(r.Data))
 				}
 
@@ -162,6 +185,8 @@ type putrecordCommandeer struct {
 	cmd            *cobra.Command
 	rootCommandeer *RootCommandeer
 	shardid        int
+	partitionKey   string
+	clientInfo     string
 }
 
 func NewCmdPutrecord(rootCommandeer *RootCommandeer) *putrecordCommandeer {
@@ -191,14 +216,20 @@ func NewCmdPutrecord(rootCommandeer *RootCommandeer) *putrecordCommandeer {
 				return err
 			}
 
-			records := []*v3io.StreamRecord{{Data: bytes}}
+			records := []*v3io.StreamRecord{{
+				Data: bytes, ClientInfo: []byte(commandeer.clientInfo), PartitionKey: commandeer.partitionKey,
+			}}
 			_, err = container.Sync.PutRecords(&v3io.PutRecordsInput{
-				Path: root.dirPath, Records: records})
+				Path:    endWithSlash(root.dirPath),
+				Records: records,
+			})
 
 			return err
 		},
 	}
 	cmd.Flags().StringVarP(&rootCommandeer.inFile, "input-file", "f", "", "Input file for the different put* commands")
+	cmd.Flags().StringVarP(&commandeer.partitionKey, "partition-key", "k", "", "Partition key (used to determine shard)")
+	cmd.Flags().StringVarP(&commandeer.clientInfo, "client-info", "c", "", "ClientInfo, extra metadata for the message")
 
 	commandeer.cmd = cmd
 	return commandeer
