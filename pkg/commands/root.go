@@ -111,6 +111,7 @@ func NewRootCommandeer() *RootCommandeer {
 	cmd.AddCommand(
 		NewCmdLS(commandeer).cmd,
 		NewCmdGet(commandeer).cmd,
+		NewCmdDirGet(commandeer).cmd,
 		NewCmdPut(commandeer).cmd,
 		NewCmdDel(commandeer).cmd,
 		NewCmdPutitem(commandeer).cmd,
