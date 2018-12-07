@@ -27,6 +27,7 @@ import (
 	"github.com/nuclio/zap"
 	"github.com/pkg/errors"
 	"github.com/v3io/v3io-go-http"
+	"net/url"
 	"time"
 )
 
@@ -100,7 +101,7 @@ func DeleteTable(logger logger.Logger, container *v3io.Container, path, filter s
 	i := 0
 	for iter.Next() {
 		name := iter.GetField("__name").(string)
-		req, err := container.DeleteObject(&v3io.DeleteObjectInput{Path: path + "/" + name}, nil, responseChan)
+		req, err := container.DeleteObject(&v3io.DeleteObjectInput{Path: path + "/" + url.QueryEscape(name)}, nil, responseChan)
 		if err != nil {
 			commChan <- i
 			return errors.Wrapf(err, "Failed to delete object '%s'.", name)

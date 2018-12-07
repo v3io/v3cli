@@ -56,7 +56,8 @@ func NewCmdGet(rootCommandeer *RootCommandeer) *getCommandeer {
 				return err
 			}
 
-			resp, err := container.Sync.GetObject(&v3io.GetObjectInput{Path: commandeer.rootCommandeer.dirPath})
+			resp, err := container.Sync.GetObject(
+				&v3io.GetObjectInput{Path: url.QueryEscape(commandeer.rootCommandeer.dirPath)})
 			if err != nil {
 				return fmt.Errorf("Error in GetObject operation (%v)", err)
 			}
@@ -220,7 +221,7 @@ func NewCmdPut(rootCommandeer *RootCommandeer) *putCommandeer {
 				return err
 			}
 
-			return container.Sync.PutObject(&v3io.PutObjectInput{Path: root.dirPath, Body: bytes})
+			return container.Sync.PutObject(&v3io.PutObjectInput{Path: url.QueryEscape(root.dirPath), Body: bytes})
 		},
 	}
 	cmd.Flags().StringVarP(&rootCommandeer.inFile, "input-file", "f", "", "Input file for the different put* commands")
@@ -255,7 +256,7 @@ func NewCmdDel(rootCommandeer *RootCommandeer) *delCommandeer {
 				return err
 			}
 
-			return container.Sync.DeleteObject(&v3io.DeleteObjectInput{Path: root.dirPath})
+			return container.Sync.DeleteObject(&v3io.DeleteObjectInput{Path: url.QueryEscape(root.dirPath)})
 		},
 	}
 
