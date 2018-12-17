@@ -24,10 +24,12 @@ v3ctl [command] [data-container] [path] [flags]
   del          Delete object
   delitems     Delete multiple records with optional filter
   get          Retrive object content
+  getdir       Retrive object directory content
   getitem      Retrive record content/fields (as json struct)
   getitems     Retrive multiple records and fields (as json struct) based on query
   getrecords   Retrive one or more stream records
   help         Help about any command
+  inferschema  Retrive multiple records and build schema file from the data
   ingest       Load data from file to stream or kv
   ls           List objects and directories (prefixes)
   put          Upload object content from input file or stdin
@@ -43,7 +45,6 @@ v3ctl [command] [data-container] [path] [flags]
                                      set, the CLI checks for a v3io.yaml configuration file in the
                                      current directory. CLI flags override file cconfiguration
                                      Example: "~/cfg/my_v3io_cfg.yaml".
-  -c, --container string             The name of an Iguazio Continous Data Platform data container. Example: "bigdata".
   -h, --help                         help for v3ctl
   -v, --log-level string[="debug"]   Verbose output. You can provide one of the following logging
                                      levels as an argument for this flag by using the assignment
