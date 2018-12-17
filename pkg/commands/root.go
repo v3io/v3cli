@@ -35,6 +35,12 @@ import (
 	"strings"
 )
 
+const (
+	V3ioPathEnvironmentVariable     = "V3IO_URL"
+	V3ioUserEnvironmentVariable     = "V3IO_USER"
+	V3ioPasswordEnvironmentVariable = "V3IO_PASSWORD"
+)
+
 type RootCommandeer struct {
 	logger      logger.Logger
 	cmd         *cobra.Command
@@ -169,6 +175,24 @@ func (rc *RootCommandeer) populateConfig(cfg *config.V3ioConfig) error {
 
 	if rc.password != "" {
 		cfg.Password = rc.password
+	}
+
+	if rc.v3ioPath == "" && cfg.WebApiEndpoint == "" {
+		if envPath := os.Getenv(V3ioPathEnvironmentVariable); envPath != "" {
+			cfg.WebApiEndpoint = envPath
+		}
+	}
+
+	if rc.username == "" && cfg.Username == "" {
+		if user := os.Getenv(V3ioUserEnvironmentVariable); user != "" {
+			cfg.Username = user
+		}
+	}
+
+	if rc.password == "" && cfg.Password == "" {
+		if pwd := os.Getenv(V3ioPasswordEnvironmentVariable); pwd != "" {
+			cfg.WebApiEndpoint = pwd
+		}
 	}
 
 	if rc.v3ioPath != "" {
