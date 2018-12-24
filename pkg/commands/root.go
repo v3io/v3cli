@@ -36,9 +36,10 @@ import (
 )
 
 const (
-	V3ioPathEnvironmentVariable     = "V3IO_URL"
-	V3ioUserEnvironmentVariable     = "V3IO_USER"
-	V3ioPasswordEnvironmentVariable = "V3IO_PASSWORD"
+	V3ioPathEnvironmentVariable       = "V3IO_API"
+	V3ioUserEnvironmentVariable       = "V3IO_USERNAME"
+	V3ioPasswordEnvironmentVariable   = "V3IO_PASSWORD"
+	V3ioSessionKeyEnvironmentVariable = "V3IO_ACCESS_KEY"
 )
 
 type RootCommandeer struct {
@@ -52,6 +53,7 @@ type RootCommandeer struct {
 	container   string
 	username    string
 	password    string
+	sessionKey  string
 	inFile      string
 	out         io.Writer
 	in          io.Reader
@@ -112,6 +114,8 @@ func NewRootCommandeer() *RootCommandeer {
 		"Username of an Iguazio Continous Data Platform user.")
 	cmd.PersistentFlags().StringVarP(&commandeer.password, "password", "p", "",
 		"Password of the configured user (see -u|--username).")
+	cmd.PersistentFlags().StringVar(&commandeer.sessionKey, "access-key", "",
+		"Access key to Iguazio Platform.")
 
 	// Add children
 	cmd.AddCommand(
@@ -195,6 +199,12 @@ func (rc *RootCommandeer) populateConfig(cfg *config.V3ioConfig) error {
 		}
 	}
 
+	if rc.sessionKey == "" && cfg.SessionKey == "" {
+		if sk := os.Getenv(V3ioSessionKeyEnvironmentVariable); sk != "" {
+			cfg.SessionKey = sk
+		}
+	}
+
 	if rc.v3ioPath != "" {
 		// Check for username and password in the web-gateway service endpoint
 		// (supported for backwards compatibility)
@@ -260,8 +270,14 @@ func (rc *RootCommandeer) initV3io() (*v3io.Container, error) {
 
 	rc.logger, _ = utils.NewLogger(rc.v3iocfg.LogLevel)
 
+	config := v3io.SessionConfig{
+		Username:   rc.v3iocfg.Username,
+		Password:   rc.v3iocfg.Password,
+		Label:      "v3ctl",
+		SessionKey: rc.v3iocfg.SessionKey}
+
 	newContainer, err := utils.CreateContainer(
-		rc.logger, rc.v3iocfg.WebApiEndpoint, rc.container, rc.v3iocfg.Username, rc.v3iocfg.Password, rc.v3iocfg.Workers)
+		rc.logger, rc.v3iocfg.WebApiEndpoint, rc.container, &config, rc.v3iocfg.Workers)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to initialize a data container.")
 	}

@@ -45,6 +45,7 @@ type V3ioConfig struct {
 	TablePath      string `json:"tablePath"`
 	Username       string `json:"username,omitempty"`
 	Password       string `json:"password,omitempty"`
+	SessionKey     string `json:"sessionKey,omitempty"`
 
 	// Logging level (for verbose output) - "debug" | "info" | "warn" | "error"
 	LogLevel string `json:"logLevel,omitempty"`
